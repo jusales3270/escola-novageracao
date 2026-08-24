@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_MIGRATOR_USER:-soma_migrator}
+      POSTGRES_PASSWORD: ${POSTGRES_MIGRATOR_PASSWORD:-troque-em-dev-local}
+      POSTGRES_DB: ${POSTGRES_DB:-somaescola}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - somaescola_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  somaescola_db_data:

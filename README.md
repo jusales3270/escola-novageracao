@@ -37,21 +37,39 @@ packages/
   motor/        motor determinístico R-01..R-12 — implementado (M1)
   schemas/      Zod, fonte única de tipos — implementado (M1)
   documentos/   templates HTML/PDF — stub (M4)
-  ledger/       cadeia de evidência — stub (M2)
+  ledger/       cadeia de evidência (Postgres) — implementado (M2)
 infra/
-  db/           migrations SQL, RLS — stub (M2)
+  db/           migrations SQL, RLS, trigger append-only — implementado (M2)
 ```
 
 ## Marcos (PRD §19)
 
 | Marco | Entrega | Aceite |
 |---|---|---|
-| M1 | `packages/motor` + `packages/schemas` + suíte de testes | golden 2027 bloqueia em R-01 |
-| M2 | Postgres, RLS, cadeia append-only, verificação | teste de adulteração passa |
+| M1 | `packages/motor` + `packages/schemas` + suíte de testes | golden 2027 bloqueia em R-01 — ✅ |
+| M2 | Postgres, RLS, cadeia append-only, verificação | teste de adulteração passa — ✅ |
 | M3 | API + interface operacional com veredito em tempo real | E2E incompleto → bloqueado → liberado |
 | M4 | Render Playwright + selo + arquivo | determinismo de SHA-256 |
 | M5 | DocuSign JWT + envelope + webhook + arquivamento do assinado | envelope real em homologação, 5 signatários |
 | M6 | BullMQ/Redis, DLQ, observabilidade | pico simulado de 40 emissões/dia |
+
+## Postgres local (M2)
+
+Docker Compose sobe um Postgres 16 só para dev/testes — migrations são SQL
+puro padrão (sem extensão proprietária de nenhum provedor), então apontar
+para a infra do cliente depois é só trocar `DATABASE_URL`/`DATABASE_URL_MIGRATOR`,
+sem mudar código.
+
+```bash
+cp .env.example .env   # ajuste POSTGRES_PORT se 5433 colidir na sua máquina
+pnpm db:up              # sobe o Postgres (docker compose), espera health check
+pnpm db:migrate          # aplica infra/db/migrations em ordem
+pnpm test:integration     # cadeia, RLS, adulteração, concorrência, multi-tenant
+```
+
+`pnpm db:reset` derruba o volume e reaplica tudo do zero. `pnpm
+test:integration:full` faz db:up + db:migrate + test:integration em um
+único comando.
 
 ## Pendências que bloqueiam decisões de negócio (PRD §18)
 
@@ -67,6 +85,7 @@ R-01 para berçário integral.
 ```bash
 pnpm install
 pnpm typecheck
-pnpm test
-pnpm test:coverage   # 100% de cobertura de branch em packages/motor
+pnpm test              # unitários — schemas, motor, ledger (não precisa de Postgres)
+pnpm test:coverage      # 100% de cobertura de branch em packages/motor
+pnpm test:integration:full  # sobe Postgres, migra, roda testes de integração do ledger
 ```
