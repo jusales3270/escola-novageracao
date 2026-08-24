@@ -1,0 +1,21 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo \"(lint ainda não configurado)\""
+  },
+  "dependencies": {
+    "@somaverso/motor": "workspace:*",
+    "@somaverso/schemas": "workspace:*",
+    "fastify": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,503 @@
+# PRD — SomaEscola · Módulo Matrícula
+**Documento:** SVS/CNG-PRD-001 · rev. 0 · 23.08.2026
+**Cliente:** CNG Educação Ltda ME (Grupo Nova Geração) — CNPJ 07.694.200/0001-30 — Itu/SP
+**Fornecedor:** SomaVerso AI Systems
+**Escopo:** ciclo requerimento → contrato → assinatura → arquivo, com selo de integridade.
+
+---
+
+## 0. Instruções ao agente do IDE
+
+Os quatro artefatos anexados a este projeto são **normativos**, não ilustrativos. Ordem de precedência quando houver conflito:
+
+| # | Artefato | Papel |
+|---|---|---|
+| 1 | `amostracontrato.pdf` | Fonte jurídica. Cláusulas, obrigações, fecho de assinaturas. |
+| 2 | `amostrarequerimento.pdf` | Fonte de campos coletados e de preços praticados. |
+| 3 | `diagnostico-cng.html` | Achados A-01…A-13 e recorte do piloto. Define o que entra e o que fica fora. |
+| 4 | `somaescola-app.html` | Protótipo executável. Define o comportamento esperado do motor, os textos de veredito, o layout dos documentos e o formato do envelope. |
+
+Regras para o agente:
+
+1. O protótipo é **especificação executável**, não código a ser portado literalmente. Reimplementar em TypeScript strict conforme §6–§12. Os textos de veredito, rótulos, CSS dos documentos e âncoras de assinatura devem ser preservados ao caractere.
+2. **Não reinventar valores.** Toda constante de preço, percentual, teto de alçada e canal de consentimento sai da tabela do protótipo (§7) e é migrada para o banco. Nenhum número novo é introduzido.
+3. Os **defeitos catalogados em §16** existem no protótipo e são obrigatórios de corrigir. Reproduzi-los é falha de aceite.
+4. Nenhuma decisão de negócio pode ser resolvida por inferência do agente. Ambiguidade não resolvida em §18 → o sistema **bloqueia**, não escolhe.
+5. Nenhum modelo de linguagem participa de qualquer caminho de decisão, cálculo ou geração documental. Zero-Inferência é requisito de arquitetura, não preferência.
+
+---
+
+## 1. Problema
+
+A escola mantém a mesma informação verdadeira em dois lugares ao mesmo tempo, conferida por leitura humana. O diagnóstico SVS/CNG-001 encontrou treze pontos de divergência ou ausência, todos com essa origem única. O maior deles: o berçário integral tem dois preços válidos circulando simultaneamente em documentos assinados juntos — R$ 44.327,28 (mensalidade × 12) contra R$ 46.056,33 (Cl. 8ª do contrato).
+
+Não é problema de disciplina da equipe. É problema de arquitetura documental.
+
+## 2. Objetivo
+
+Eliminar a segunda digitação. Um cadastro único passa a ser a origem de todo documento gerado; a conferência deixa de depender de quem está lendo; toda divergência não resolvida vira **bloqueio explícito** em vez de documento emitido.
+
+**Métrica de sucesso do piloto:**
+- 0 documentos emitidos a partir de tabela não aprovada.
+- 0 divergências entre mensalidade do requerimento e anuidade do contrato (impossibilidade estrutural, não conferência).
+- 100% dos consentimentos de imagem com decisão por canal e vigência registrada.
+- Cadeia de evidência íntegra em verificação diária.
+- Tempo por contrato: medido antes (§18.7) e depois.
+
+## 3. Escopo
+
+### 3.1 Dentro
+- Cadastro único de aluno, responsáveis legais, responsável financeiro e autorizados à retirada.
+- Tabela de preços versionada com vigência por ano letivo e aprovação registrada — fonte única de mensalidade e anuidade.
+- Motor determinístico de 12 regras (R-01…R-12) com veredito LIBERADO / BLOQUEADO / INCOMPLETO.
+- Geração do requerimento e do contrato a partir do mesmo cadastro (HTML → PDF).
+- Alçada de desconto aplicada pelo sistema, com registro de quem autorizou.
+- Envelope DocuSign com 4 a 5 signatários, âncoras AutoPlace e acompanhamento de status.
+- Arquivo do assinado com SHA-256 e selo de integridade.
+- Consentimento de imagem por canal, com revogação e vigência.
+- Registro de alteração contratual (transições de turma).
+- Cadeia de evidência append-only com encadeamento por hash.
+
+### 3.2 Fora — e por escrito
+Nota fiscal de serviço · FOA e instrumentos pedagógicos · fluxo de caixa, DRE, financeiro · compras, estoque, papelaria · CRM e captação · álbum de fotos e portal dos pais · registro de administração de medicamento (A-05, segunda metade) · alinhamento do contrato à prática de material individual (A-07).
+
+Itens fora de escopo permanecem **rastreados**, não resolvidos.
+
+## 4. Calendário
+
+A safra 2027 é processada manualmente com o método atual. O sistema entra em produção na **safra 2028**, com as transições de turma ao longo de 2027 servindo de teste real e de baixo volume. Implantar durante o pico de rematrícula é excluído.
+
+Consequência técnica: a tabela 2027 permanece no repositório como **fixture de regressão** — ela deve produzir BLOQUEADO em R-01 para berçário integral. Testes que a fizerem passar estão errados.
+
+## 5. Atores e alçadas
+
+| Papel | Pode | Teto de desconto |
+|---|---|---|
+| SECRETARIA | criar pedido, simular, emitir se LIBERADO | 10% |
+| COORDENACAO | idem secretaria | 10% |
+| DIRECAO | aprovar tabela, autorizar desconto acima do teto, definir testemunhas | 100% |
+| AUDITOR | leitura + verificação da cadeia | — |
+| SISTEMA | eventos de motor, fila e webhook | — |
+
+Contatos da conta: Renato (financeiro/administrativo, interlocutor primário), Marlene e Débora (direção, autoridade de aprovação), César (fornecedor externo de software — interface de leitura apenas, se aplicável).
+
+Operador **não identificado** ⇒ teto 0% **e** bloqueio em R-03. Ausência de papel nunca resolve para permissivo.
+
+---
+
+## 6. Arquitetura
+
+```
+apps/
+  api/          Fastify + TypeScript strict          (REST, RBAC, RLS)
+  web/          interface operacional (SPA)          (importa @somaverso/motor)
+  worker/       BullMQ consumers                     (render, envelope, webhook)
+packages/
+  motor/        motor determinístico R-01..R-12      (isomórfico: node + browser)
+  schemas/      Zod + tipos derivados                (fonte única de contrato)
+  documentos/   templates HTML + CSS de impressão    (requerimento, contrato)
+  ledger/       encadeamento e verificação SHA-256
+infra/
+  db/           migrations SQL, RLS, triggers
+```
+
+**Stack fixada:** Node 22 LTS · TypeScript strict (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`) · Zod · Fastify · Postgres 16 (RLS + trigger append-only) · Redis 7 + BullMQ · Playwright (Chromium) · DocuSign eSignature REST v2.1 (JWT Grant, RS256).
+
+**Princípio isomórfico:** `@somaverso/motor` é compilado para o servidor e para o navegador a partir do mesmo fonte. A interface mostra o veredito em tempo real; o servidor **reavalia e reemite o veredito** antes de qualquer efeito. O veredito do cliente é conveniência de UX e não tem autoridade.
+
+### 6.1 Invariantes de arquitetura
+
+| # | Invariante |
+|---|---|
+| I-1 | Anuidade nunca é digitada. É sempre `mensalidade × 12`, derivada na leitura. |
+| I-2 | Nenhum documento é gerado a partir de tabela sem aprovação registrada. |
+| I-3 | Ambiguidade não resolvida → BLOQUEADO. Nunca advertência silenciosa. |
+| I-4 | Todo evento com efeito jurídico entra na cadeia antes de o efeito ocorrer. |
+| I-5 | A cadeia é append-only no banco, não por convenção da aplicação. |
+| I-6 | Ambiente, aprovação de tabela, testemunhas e DPA são estado do servidor. O cliente não os altera. |
+| I-7 | Nenhuma inferência probabilística em veredito, cálculo, template ou roteamento de assinatura. |
+
+---
+
+## 7. Tabela de preços — fonte única
+
+Entidade versionada. Sem aprovação registrada, o motor bloqueia em R-07.
+
+**Estrutura (ano letivo 2027 — fixture de regressão):**
+
+```
+anoLetivo: 2027 · vigenciaInicio: 2026-08-01 · aprovadaPor: null
+parcelas: 12 · descontoPontualidadePct: 5 · matriculaCheia: 1821.46
+```
+
+| Faixa | Período | Mensalidade | × 12 (derivada) | Anuidade declarada (Cl. 8ª) | Δ | Alim. inclusa |
+|---|---|---:|---:|---:|---:|:--:|
+| BERCARIO | MEIO | 2.185,62 | 26.227,44 | 26.227,49 | 0,05 | não |
+| BERCARIO | INTEGRAL | 3.693,94 | 44.327,28 | 46.056,33 | **1.729,05** | **sim** |
+| MINI_MATERNAL | MEIO | 2.012,25 | 24.147,00 | 24.146,94 | −0,06 | não |
+| MINI_MATERNAL | INTEGRAL | 3.004,79 | 36.057,48 | 36.057,50 | 0,02 | não |
+| MATERNAL_JARDIM_ALFA | MEIO | 2.080,13 | 24.961,56 | 24.961,61 | 0,05 | não |
+| MATERNAL_JARDIM_ALFA | INTEGRAL | 3.072,68 | 36.872,16 | 36.872,17 | 0,01 | não |
+
+Tolerância R-01: `12 × R$ 0,01 = R$ 0,12`. Cinco linhas passam; berçário integral bloqueia.
+
+**Mapa turma → faixa:** BERCARIO→BERCARIO · MINI_MATERNAL→MINI_MATERNAL · MATERNAL, JARDIM, ALFA_I, ALFA_II→MATERNAL_JARDIM_ALFA.
+
+**Adicionais mensais:** hora adicional (Time Care) R$ 27/dia · almoço R$ 570 · almoço e jantar R$ 800 · almoço ou jantar R$ 530 · fraldário ½ R$ 270 · fraldário integral R$ 485 · fraldário avulso R$ 27.
+
+**Escada de matrícula — 8 degraus sobre a cheia de R$ 1.821,46:**
+
+| Chave | % | Parcelas | Valor parcela |
+|---|--:|--:|---:|
+| AVISTA_ATE_31_08 | 50 | 1 | 910,73 |
+| AVISTA_ATE_15_09 | 45 | 1 | 1.001,80 |
+| AVISTA_1X | 40 | 1 | 1.092,88 |
+| CARTAO_2X | 35 | 2 | 591,97 |
+| CARTAO_3X | 20 | 3 | 485,72 |
+| CARTAO_4X | 10 | 4 | 409,83 |
+| CARTAO_5X | 5 | 5 | 346,08 |
+| CARTAO_6X | 0 | 6 | 303,58 |
+
+> **Divergência a resolver na migração:** o diagnóstico SVS/CNG-001 descreve "sete degraus" e enumera oito condições; o protótipo implementa oito. A tabela 2028 aprovada deve declarar explicitamente quantos degraus existem e qual o valor de cada um — R-11 passa a reconciliar declarado contra calculado (§9), e não a recalcular contra si mesmo.
+
+**Cálculo da mensalidade (ordem fixa, arredondamento a 2 casas em cada etapa):**
+
+```
+descontoExcepcional     = mensalidade × (pctExcepcional / 100)
+totalCheio              = mensalidade + alimentacao + fraldario + horaAdicional − descontoExcepcional
+baseP                   = mensalidade − descontoExcepcional
+descontoPontualidade    = baseP × 5%          // não incide sobre serviços cobrados à parte
+totalComPontualidade    = totalCheio − descontoPontualidade
+```
+
+O desconto de pontualidade incide apenas sobre o serviço educacional. Isso é decorrência do contrato e não é configurável.
+
+---
+
+## 8. Modelo de domínio
+
+### 8.1 Entidades
+
+| Tabela | Notas |
+|---|---|
+| `escola` | tenant. Toda tabela carrega `escola_id`. |
+| `usuario`, `usuario_papel` | RBAC de §5. |
+| `aluno` | nome, nascimento, endereço, bairro, cidade, CEP, irmãos, restrição judicial. |
+| `pessoa` | responsáveis, autorizados, testemunhas. CPF normalizado (11 dígitos). |
+| `vinculo` | (aluno, pessoa, tipo: LEGAL \| FINANCEIRO \| AUTORIZADO_RETIRADA), grau/vínculo. |
+| `ficha_saude` | uso contínuo, medicamento, alergia, intolerância, convênio, antitérmico, contato de emergência. Dado sensível (§14). |
+| `anexo` | prescrição médica, documento de restrição judicial. sha256, mime, bytes, antivírus. |
+| `tabela_preco` | ano_letivo, vigência, aprovada_por, aprovada_em, hash do conteúdo, status. |
+| `tabela_preco_linha` / `_adicional` / `_degrau` | conteúdo de §7. |
+| `matricula` | ano_letivo, tipo (MATRICULA \| REMATRICULA), status, snapshot do pedido (jsonb). |
+| `veredito` | matricula_id, tabela_preco_id, motor_versao, decisao, vereditos[] (jsonb), hash. |
+| `consentimento` | matricula_id, canal, concedido, vigencia_inicio, vigencia_fim, evento_id. |
+| `documento` | tipo (REQUERIMENTO \| CONTRATO \| ASSINADO \| CERTIFICADO), sha256, storage_uri, bytes. |
+| `envelope` | docusign_envelope_id, status, enviado_em, concluido_em. |
+| `signatario` | envelope_id, papel, nome, email, cpf, ordem, status. |
+| `ledger_evento` | append-only, encadeado (§10). |
+| `idempotencia` | chave, rota, resposta, expira_em. |
+
+### 8.2 Schemas Zod (`packages/schemas`)
+
+Fonte única de contrato entre API, worker, motor e interface. Sem DTO paralelo, sem tipo escrito à mão.
+
+```ts
+export const Turma   = z.enum(['BERCARIO','MINI_MATERNAL','MATERNAL','JARDIM','ALFA_I','ALFA_II']);
+export const Periodo = z.enum(['MEIO','INTEGRAL']);
+export const Alim    = z.enum(['NENHUMA','ALMOCO','ALMOCO_JANTAR','ALMOCO_OU_JANTAR']);
+export const Fraldario = z.enum(['NENHUM','MEIO','INTEGRAL','AVULSO']);
+export const Canal   = z.enum(['SITE','REDES_SOCIAIS','ALBUM_TURMA',
+                               'USO_PEDAGOGICO_INTERNO','MATERIAL_IMPRESSO']);
+export const Papel   = z.enum(['SECRETARIA','COORDENACAO','DIRECAO','AUDITOR']);
+export const Antitermico = z.enum(['NENHUM','AUTORIZADO']);   // ver defeito D-06
+
+export const CPF = z.string().transform(s => s.replace(/\D/g,''))
+                   .refine(validaCPF, 'CPF inválido');
+
+export const Pedido = z.object({
+  anoLetivo: z.number().int(),
+  tipo: z.enum(['MATRICULA','REMATRICULA']),
+  aluno: Aluno,
+  contratante: Pessoa,
+  responsavelFinanceiro: Pessoa,
+  servicos: z.object({ turma: Turma, periodo: Periodo, alimentacao: Alim,
+                       fraldario: Fraldario, horaAdicionalDiasMes: z.number().int().min(0).max(22) }),
+  formaPagamentoMatricula: DegrauChave,
+  descontoExcepcionalPct: z.number().min(0).max(100),
+  justificativaDesconto: z.string().optional(),
+  consentimentos: z.record(Canal, z.boolean()),
+  operador: z.object({ id: z.string().uuid(), nome: z.string().min(3), papel: Papel }),
+}).strict();
+```
+
+`.strict()` em todos os objetos. Campo desconhecido é erro, não é ignorado.
+
+**Contexto de avaliação** (`Contexto`) — exclusivamente do servidor: `tabelaAprovadaPor`, `tabelaPrecoId`, `testemunhas[]`, `prescricaoAnexoId`, `dpaAssinado`, `ambiente`.
+
+---
+
+## 9. Motor de regras (R-01…R-12)
+
+Assinatura: `avalia(pedido: Pedido, ctx: Contexto, tabela: TabelaPreco): Resultado`.
+Puro. Sem I/O, sem relógio, sem aleatoriedade, sem rede. Recebe `agora` por parâmetro quando necessário.
+
+```ts
+type Veredito = { regra: string; titulo: string; severidade: 'BLOQUEIA'|'ALERTA';
+                  conforme: boolean; detalhe: string; achado: string|null; dono: string };
+type Resultado = { decisao: 'LIBERADO'|'BLOQUEADO'; vereditos: Veredito[];
+                   bloqueios: Veredito[]; calculo: Calculo|null; motorVersao: string };
+```
+
+`decisao = BLOQUEADO` se existir ao menos um veredito `BLOQUEIA` não conforme. `ALERTA` não conforme não bloqueia, mas é persistido e impresso na trilha.
+
+| Regra | Título | Sev. | Condição de conformidade | Achado | Decide |
+|---|---|---|---|---|---|
+| R-07 | Tabela de preços aprovada | BLOQUEIA | `tabela.aprovadaPor != null` e vigente na data do pedido | — | direção |
+| R-08 | Ano letivo coerente | BLOQUEIA | `pedido.anoLetivo === tabela.anoLetivo` | A-09 | secretaria |
+| R-01 | Anuidade reconcilia com mensalidade × 12 | BLOQUEIA | `\|declarada − mensalidade×12\| ≤ 0,12` | A-01 | direção |
+| R-02 | Alimentação não cobrada em duplicidade | BLOQUEIA | `!(linha.alimentacaoInclusa && servicos.alimentacao !== 'NENHUMA')` | A-02 | direção |
+| R-03 | Desconto dentro da alçada | BLOQUEIA | operador identificado **e** `pct ≤ teto(papel)` **e** (`pct === 0` ou justificativa presente) | A-08 | direção |
+| R-04 | Consentimento decidido canal a canal | BLOQUEIA | os 5 canais com decisão vigente registrada | A-04 | jurídico |
+| R-05 | Medicação com prescrição anexada | BLOQUEIA | se `usoContinuo` ou `antitermico === 'AUTORIZADO'` ⇒ anexo de prescrição válido | A-05 | secretaria |
+| R-06 | Duas testemunhas com CPF | BLOQUEIA | exatamente 2 testemunhas, CPF válido e e-mail real cadastrado | A-06 | direção |
+| R-09 | Responsável financeiro identificado | BLOQUEIA | nome ≥ 3, CPF válido, e-mail válido | — | secretaria |
+| R-10 | Autorizados à retirada registrados | BLOQUEIA se houver restrição judicial, senão ALERTA | ≥ 1 autorizado; com restrição judicial, exige documento comprobatório anexo | — | secretaria |
+| R-11 | Escada de matrícula consistente | ALERTA | para cada degrau: `\|valorDeclarado − cheia×(1−pct/100)/parcelas\| ≤ 0,01` | A-03 | direção |
+| R-12 | Contrato de tratamento de dados | BLOQUEIA | `ambiente !== 'producao'` **ou** `dpaAssinado` | — | jurídico |
+
+**Ordem de exibição fixa:** R-07, R-08, R-01, R-02, R-03, R-04, R-05, R-06, R-09, R-10, R-11, R-12. A ordem não é alfabética por decisão: precede o que barra a emissão inteira.
+
+**Estado INCOMPLETO:** anterior à avaliação. Campos obrigatórios ausentes (`pendencias()`) suspendem o motor — nenhuma regra é marcada conforme ou não conforme enquanto houver pendência. É estado de interface, não veredito.
+
+**Textos de detalhe:** copiar literalmente do protótipo, incluindo referências de cláusula (Cl. 8ª §6º, Cl. 12ª §1º, Cl. 13ª §1º, Cl. 15ª, Cl. 16ª), CPC art. 784 III e LGPD art. 14/39. São eles que tornam o bloqueio acionável pela secretaria sem consulta.
+
+**Versionamento:** `motorVersao` é semver do pacote + hash do fonte compilado, gravado em cada veredito. Reavaliação histórica usa a versão registrada, nunca a corrente.
+
+---
+
+## 10. Cadeia de evidência
+
+Evento canônico:
+
+```
+{ seq, em, tipo, ator, matriculaId, payload, hashAnterior, hash }
+hash = SHA-256(JSON.stringify({seq, em, tipo, ator, matriculaId, payload, hashAnterior}))
+hashAnterior do seq 1 = "0" × 64
+```
+
+Serialização canônica obrigatória: chaves na ordem declarada acima, sem espaços, UTF-8, timestamps ISO-8601 em UTC com milissegundos. Qualquer variação quebra a verificação — é ponto de teste, não detalhe.
+
+**Tipos de evento:** `PEDIDO_RECEBIDO` · `VEREDITO_MOTOR` · `CONSENTIMENTO_REGISTRADO` · `CONSENTIMENTO_REVOGADO` · `DOCUMENTO_GERADO` · `ENVELOPE_ENVIADO` · `ENVELOPE_ENTREGUE` · `ASSINATURA_CONCLUIDA` · `ENVELOPE_RECUSADO` · `ENVELOPE_ANULADO` · `DOCUMENTO_ARQUIVADO` · `TABELA_APROVADA` · `ALTERACAO_CONTRATUAL`.
+
+**Persistência:** `seq` é sequência por escola, atribuída sob `SELECT … FOR UPDATE` na linha de controle do tenant — encadeamento não tolera concorrência otimista. Trigger `BEFORE UPDATE OR DELETE ON ledger_evento` levanta exceção. `REVOKE UPDATE, DELETE` do papel da aplicação.
+
+**Verificação:** job diário + endpoint sob demanda. Percorre a cadeia, recalcula, retorna `{integra: true}` ou `{integra: false, rompeuEm: seq}`. Rompimento dispara alerta e **congela emissão** para o tenant.
+
+---
+
+## 11. Documentos
+
+Dois templates, ambos HTML com CSS `@page` A4 (margens 15mm 14mm 16mm), renderizados por Playwright/Chromium.
+
+**Requerimento de matrícula** — aluno · serviços contratados · composição da mensalidade · anuidade derivada em destaque · matrícula (condição, %, parcelas, valor) · ficha pessoal com aviso de dado sensível · autorização de imagem por finalidade com data de registro · autorizados à retirada · contratante e responsável financeiro · declaração de veracidade e vacinação · blocos de assinatura · selo.
+
+**Contrato de prestação de serviços educacionais** — qualificação das partes · objeto e preço (Cl. 2ª e 8ª) com aviso de derivação única · 12 cláusulas · local e data por extenso · blocos de assinatura (escola, contratante, financeiro quando distinto, 2 testemunhas com CPF) · aviso de eficácia executiva · selo.
+
+**Selo:** `matriculaId`, 32 primeiros caracteres do hash de veredito, `geradoEm`, menção à verificabilidade pela cadeia.
+
+**Determinismo do PDF (requisito, não otimização):** fontes embutidas e locais (sem CDN em tempo de render), `TZ=America/Sao_Paulo`, metadados fixos (`creationDate` injetada = `geradoEm`), sem cabeçalho/rodapé do Chromium, escala 1. Mesmo pedido + mesma tabela + mesmo `geradoEm` ⇒ mesmo SHA-256. Isso é testado.
+
+**Logotipo:** ativo real do cliente, versionado em `packages/documentos/assets`. Não gerar marca, não substituir por texto.
+
+---
+
+## 12. Assinatura eletrônica (DocuSign)
+
+**Autenticação:** JWT Grant, RS256, chave privada em secret manager (nunca no repositório, nunca em variável de build). Escopos `signature impersonation`. Cache de access token com renovação a T−60s.
+
+**Signatários e roteamento:**
+
+| Ordem | Papel | Âncora | Condição |
+|--:|---|---|---|
+| 1 | CONTRATANTE | `/ass_contratante/` | sempre |
+| 2 | RESPONSAVEL_FINANCEIRO | `/ass_financeiro/` | apenas se CPF ≠ contratante (normalizado) |
+| 3 | ESCOLA | `/ass_escola/` | sempre |
+| 4 | TESTEMUNHA 1 | `/ass_testemunha_1/` | sempre |
+| 4 | TESTEMUNHA 2 | `/ass_testemunha_2/` | sempre |
+
+Testemunhas em ordem 4 assinam em paralelo. **Âncoras distintas por testemunha** — o deslocamento vertical calculado por paridade de índice do protótipo é substituído (defeito D-03).
+
+**Tabs por signatário:** `signHere` na âncora · `dateSigned` em `anchorXOffset: 240` · `text` travado com CPF formatado em `anchorYOffset: +26`, quando houver CPF.
+
+**Envelope:** assunto `Matrícula {ano} — {aluno} — Grupo Nova Geração`; dois documentos PDF; `status: sent`; `customFields` com `matriculaId` e `anoLetivo`.
+
+**Connect/webhook:** `https://escola.somaverso.com.br/ds/webhook`, `requireAcknowledgment: true`, `includeCertificateOfCompletion: true`. Validação obrigatória de assinatura HMAC do payload; rejeição silenciosa e log em caso de falha. Eventos de envelope: sent, delivered, completed, declined, voided. Eventos de destinatário: Completed, Declined.
+
+**Ao concluir:** baixar documento assinado e certificado de conclusão, calcular SHA-256, arquivar, registrar `ASSINATURA_CONCLUIDA` e `DOCUMENTO_ARQUIVADO`.
+
+**Idempotência:** um envelope por matrícula por versão de veredito. Reenvio exige anulação explícita (`ENVELOPE_ANULADO`) do anterior.
+
+**Modo MOCK:** habilitado por configuração de servidor para homologação. Produz o mesmo `envelopeDefinition`, não chama a API, registra `modo: 'MOCK'` no evento. Nunca ativável a partir do cliente.
+
+---
+
+## 13. Filas e carga
+
+| Fila | Job | Concorrência | Retry |
+|---|---|--:|---|
+| `documentos` | render Playwright de requerimento + contrato | 4 | 3×, backoff exponencial 2s |
+| `assinatura` | criar envelope, enviar | 2 | 5×, backoff 5s, respeita rate limit DocuSign |
+| `webhook` | processar callback, arquivar assinado | 4 | 5× |
+| `verificacao` | cadeia diária (cron) | 1 | 1× |
+
+Chave de idempotência por job: `{matriculaId}:{etapa}:{vereditoHash}`. DLQ por fila com alerta. Pool de browser reutilizado no worker de render (não abrir Chromium por job).
+
+**Dimensionamento:** ~130 alunos por safra; pico de rematrícula concentrado em ~2 semanas; render medido em 3–5s por par de documentos. 4 workers absorvem ~40 emissões/dia com folga. Sem Redis em produção, a emissão degrada para síncrona — **e a interface deve dizer isso**, não fingir capacidade.
+
+---
+
+## 14. Segurança, LGPD e retenção
+
+- **Papéis:** a escola é controladora; o fornecedor é operador. Nenhum dado real entra em produção antes do DPA assinado — garantido por R-12, não por processo.
+- **Dado sensível de criança** (LGPD art. 14): ficha de saúde e anexos cifrados em repouso; acesso restrito por RLS e registrado.
+- **RLS:** política por `escola_id` derivada do JWT em `current_setting('app.escola_id')`; políticas de leitura/escrita por papel; `ledger_evento` sem UPDATE/DELETE para qualquer papel de aplicação.
+- **Consentimento:** decisão por canal com `vigencia_inicio`/`vigencia_fim`. Revogação é evento novo, nunca edição do anterior. Revogação vale da data do pedido e não tem prejuízo pedagógico ou contratual.
+- **Canal do titular:** secretaria@novageracaoitu.com.br, impresso nos documentos.
+- **Anexos:** validação de mime e tamanho, varredura antivírus, storage privado com URL assinada de curta duração.
+- **Segredos:** chave DocuSign, credenciais de banco e HMAC em secret manager. Rotação documentada.
+- **Retenção:** documentos assinados e cadeia pelo prazo prescricional aplicável; ficha de saúde purgada conforme política definida com a assessoria jurídica (pendência §18.5).
+- **Auditoria:** todo acesso a ficha de saúde e a documento assinado gera log com usuário, IP e finalidade.
+
+---
+
+## 15. API
+
+Todas as rotas sob `/v1`, autenticadas, com `escola_id` do token. Erros em RFC 7807.
+
+| Método | Rota | Notas |
+|---|---|---|
+| POST | `/matriculas` | cria rascunho |
+| PATCH | `/matriculas/:id` | atualiza pedido; valida com Zod `.strict()` |
+| POST | `/matriculas/:id/simulacao` | reavalia no servidor; **sem efeitos**; retorna `Resultado` |
+| POST | `/matriculas/:id/emissao` | exige `Idempotency-Key`; reavalia; 409 se BLOQUEADO |
+| GET | `/matriculas/:id` | pedido + último veredito + status do envelope |
+| GET | `/matriculas/:id/trilha` | eventos da matrícula |
+| GET | `/matriculas/:id/documentos/:tipo` | URL assinada |
+| POST | `/matriculas/:id/alteracao-contratual` | transição de turma; gera novo veredito |
+| POST | `/consentimentos/:id/revogacao` | evento de revogação |
+| GET | `/tabelas-preco` · POST `/tabelas-preco` | direção |
+| POST | `/tabelas-preco/:id/aprovacao` | direção; grava `TABELA_APROVADA` |
+| GET | `/ledger/verificacao` | íntegra / rompeuEm |
+| POST | `/ds/webhook` | público, HMAC obrigatório |
+
+**Contrato de erro em bloqueio:** 409 com a lista completa de vereditos não conformes — regra, título, detalhe, achado, dono. O cliente nunca precisa adivinhar o motivo nem repetir a chamada para descobrir.
+
+---
+
+## 16. Defeitos do protótipo — correção obrigatória
+
+| # | Defeito | Correção |
+|---|---|---|
+| D-01 | R-11 compara uma expressão consigo mesma; passa sempre. | Reconciliar `valorDeclarado` do degrau (vindo da tabela) contra o calculado, tolerância R$ 0,01. |
+| D-02 | E-mail de testemunha fabricado por normalização do nome. | E-mail real de cadastro; ausência ⇒ R-06 bloqueia. |
+| D-03 | Testemunhas compartilham a âncora `/ass_testemunha/` com offset por paridade. | Âncoras `/ass_testemunha_1/` e `/ass_testemunha_2/`. |
+| D-04 | Operador sem papel resulta em teto 0 e passa em R-03 com desconto 0. | Operador não identificado ⇒ R-03 bloqueia. |
+| D-05 | Comparação de CPF ora bruta (`fin.cpf === ct.cpf`) ora normalizada. | Normalizar para 11 dígitos em toda comparação e persistência. |
+| D-06 | `antitermicoAutorizado` é texto livre avaliado por truthiness. | Enum `NENHUM \| AUTORIZADO` + campo texto separado para o medicamento. |
+| D-07 | Prescrição é um `select` "sim/não". | Upload real de anexo, com hash e validação. |
+| D-08 | `AMBIENTE`, `DPA`, `TABELA.aprovadaPor` e testemunhas alteráveis por clique na interface. | Estado do servidor; a interface apenas exibe. |
+| D-09 | Ledger em memória, perdido no refresh. | Postgres append-only com trigger. |
+| D-10 | `documentBase64` é texto de mock. | Base64 do PDF real renderizado. |
+| D-11 | Hash de veredito não inclui versão do motor nem da tabela. | Incluir `motorVersao` e `tabelaPrecoId` no material hasheado. |
+| D-12 | Revogação de consentimento tem tipo de evento mas não tem caminho de uso. | Endpoint + interface + vigência. |
+| D-13 | `pendencias()` não exige nome/papel do operador nem contato de emergência do responsável financeiro. | Incluir na lista obrigatória. |
+
+---
+
+## 17. Testes e critérios de aceite
+
+**Unitários — motor (obrigatório 100% de cobertura de ramo):**
+- Um caso conforme e ao menos um não conforme por regra R-01…R-12.
+- **Golden:** tabela 2027 + berçário integral ⇒ `BLOQUEADO`, bloqueio único em R-01, delta `1.729,05`.
+- Tabela 2027 + demais cinco linhas ⇒ R-01 conforme (deltas em centavos, dentro da tolerância de 0,12).
+- Berçário integral + `alimentacao !== NENHUMA` ⇒ R-02 bloqueia.
+- Secretaria com 15% ⇒ R-03 bloqueia; direção com 15% sem justificativa ⇒ R-03 bloqueia; direção com 15% e justificativa ⇒ conforme.
+- 4 de 5 canais decididos ⇒ R-04 bloqueia nomeando o canal faltante.
+- 1 testemunha ⇒ R-06 bloqueia; 3 ⇒ bloqueia.
+- Produção sem DPA ⇒ R-12 bloqueia; homologação sem DPA ⇒ conforme.
+
+**Propriedade:** para qualquer combinação válida de turma × período × alimentação × fraldário × dias de hora adicional × degrau, `totalComPontualidade ≤ totalCheio` e todos os valores são múltiplos de centavo.
+
+**Cadeia:** inserir N eventos, verificar íntegra; alterar 1 byte de payload por SQL direto (com trigger desabilitado em ambiente de teste), verificar `rompeuEm` correto; tentativa de UPDATE via papel da aplicação deve falhar.
+
+**Documentos:** render duas vezes com mesma entrada ⇒ mesmo SHA-256. Snapshot do HTML dos dois templates. Presença de todas as âncoras esperadas por configuração de signatários.
+
+**Envelope:** snapshot do `envelopeDefinition` para os dois cenários (contratante = financeiro; contratante ≠ financeiro), conferindo `routingOrder`, âncoras e tabs de CPF.
+
+**E2E (Playwright):** pedido incompleto ⇒ INCOMPLETO com lista de pendências; pedido completo com tabela não aprovada ⇒ BLOQUEADO em R-07 e botão de emissão desabilitado; aprovação da tabela ⇒ LIBERADO; emissão ⇒ dois documentos, envelope, trilha íntegra.
+
+**Aceite do piloto:** todos os itens acima verdes, verificação de cadeia íntegra por 7 dias consecutivos em homologação, e as sete decisões de §18 registradas no sistema (não em e-mail).
+
+---
+
+## 18. Pendências que bloqueiam o desenvolvimento
+
+Cada item é entrada de dados que só a escola pode determinar. Enquanto não resolvido, o sistema bloqueia — não escolhe.
+
+| # | Decisão | Quem | Bloqueia |
+|---|---|---|---|
+| 18.1 | Preço do berçário integral: R$ 44.327,28 ou R$ 46.056,33 | direção | tabela 2028, R-01 |
+| 18.2 | Alimentação do berçário integral: inclusa ou adicional | direção | R-02 |
+| 18.3 | Tabela 2028 aprovada como fonte única | direção | R-07, toda emissão |
+| 18.4 | Testemunhas: fixas ou variáveis; aceite de ~130 assinaturas por safra | direção | R-06, envelope |
+| 18.5 | Parecer jurídico sobre consentimento por canal (forma e escopo) | assessoria | R-04, template |
+| 18.6 | DPA controlador/operador assinado | assessoria | R-12, entrada de dado real |
+| 18.7 | Medição do processo atual (minutos/contrato, pessoas, dias na rematrícula) | secretaria | métrica de ganho |
+
+---
+
+## 19. Marcos
+
+| Marco | Entrega | Aceite |
+|---|---|---|
+| M1 | `packages/motor` + `packages/schemas` + suíte de testes | golden 2027 bloqueia em R-01 |
+| M2 | Postgres, RLS, cadeia append-only, verificação | teste de adulteração passa |
+| M3 | API + interface operacional com veredito em tempo real | E2E incompleto → bloqueado → liberado |
+| M4 | Render Playwright + selo + arquivo | determinismo de SHA-256 |
+| M5 | DocuSign JWT + envelope + webhook + arquivamento do assinado | envelope real em homologação, 5 signatários |
+| M6 | BullMQ/Redis, DLQ, observabilidade | pico simulado de 40 emissões/dia |
+
+M6 é pré-requisito de produção na safra 2028, não item opcional.
+
+---
+
+## 20. Observabilidade
+
+Logs estruturados com `matriculaId` e `vereditoHash` como campos de correlação. Métricas: emissões por decisão, distribuição de bloqueios por regra, latência de render, profundidade de fila, idade do envelope por status, resultado da verificação diária. Alertas: cadeia rompida, DLQ não vazia, envelope parado > 72h, falha de renovação do token DocuSign.
+
+O painel de bloqueios por regra é entregável de negócio: ele mostra à direção onde a operação real diverge do que a escola escreveu.
+
+---
+
+## Anexo A — Mapa achado → regra
+
+| Achado | Descrição resumida | Tratamento |
+|---|---|---|
+| A-01 | Berçário integral com dois preços válidos | R-01 (bloqueia) |
+| A-02 | Alimentação inclusa no contrato, cobrada à parte | R-02 (bloqueia) |
+| A-03 | Escada de descontos correta | R-11 (alerta, reconciliação) |
+| A-04 | Autorização de imagem sem separação por canal | R-04 (bloqueia) + entidade de consentimento |
+| A-05 | Autorização de medicação sem registro de execução | R-05 cobre a autorização; o registro de execução está fora do piloto e permanece rastreado |
+| A-06 | Duas testemunhas com CPF não dimensionadas | R-06 (bloqueia) + envelope de 5 signatários |
+| A-07 | Material individual: contrato exclui, prática inclui | fora do piloto — alinhamento jurídico |
+| A-08 | Alçada de desconto não escrita | R-03 (bloqueia) |
+| A-09 | "Exercício 2026" no requerimento de 2027 | R-08 (bloqueia) + geração a partir de fonte única |
+| A-10 | Alfa II sem campo socioemocional | fora do piloto — coordenação |
+| A-11 | FOA em Word: acúmulo de trimestres e imagem pesada | fora do piloto |
+| A-12 | Não há FOA do berçário | fora do piloto — coordenação |
+| A-13 | FOA trimestral no papel, mensal na prática | fora do piloto — esclarecer antes de estimar |
+
+---
+
+SomaVerso AI Systems · SVS/CNG-PRD-001 · base: 4 artefatos normativos · 12 regras · 13 defeitos de protótipo · 7 pendências bloqueantes

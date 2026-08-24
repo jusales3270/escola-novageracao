@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOA da Operação — CNG Educação | Diagnóstico Documental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EAECE7;
+  --paper-2:#F2F3EF;
+  --ink:#1B1F1C;
+  --ink-soft:#4A5049;
+  --rule:#C3C8C0;
+  --rule-soft:#D8DCD6;
+  --caneta:#B4231A;
+  --conforme:#2E5E3E;
+  --atencao:#94660A;
+  --measure:68rem;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif;
+  font-size:16.5px;
+  line-height:1.62;
+  background-image:repeating-linear-gradient(to bottom,transparent 0 31px,rgba(27,31,28,.035) 31px 32px);
+}
+.wrap{max-width:var(--measure);margin:0 auto;padding:0 clamp(1rem,4vw,3.5rem) 6rem;}
+
+/* ---------- cabeçalho tipo ficha ---------- */
+.ficha{
+  border:1.5px solid var(--ink);
+  background:var(--paper-2);
+  margin:clamp(1.5rem,5vw,3.5rem) 0 0;
+}
+.ficha__faixa{
+  border-bottom:1.5px solid var(--ink);
+  padding:.85rem clamp(1rem,2.5vw,1.6rem);
+  display:flex;flex-wrap:wrap;gap:.6rem 1.5rem;align-items:baseline;justify-content:space-between;
+}
+.orgao{
+  font-family:"Archivo",system-ui,sans-serif;font-weight:700;
+  font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;
+}
+.doc-id{font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.04em;color:var(--ink-soft);}
+.ficha__titulo{padding:clamp(1.4rem,4vw,2.6rem) clamp(1rem,2.5vw,1.6rem) 1.2rem;}
+h1{
+  font-family:"Archivo",system-ui,sans-serif;
+  font-weight:700;font-size:clamp(1.9rem,5.2vw,3.35rem);
+  line-height:1.02;letter-spacing:-.022em;margin:0 0 .55rem;
+}
+h1 .sub{display:block;font-weight:400;font-size:.4em;letter-spacing:.02em;color:var(--ink-soft);margin-top:.85rem;line-height:1.35;}
+.ficha__campos{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  border-top:1px solid var(--rule);
+}
+.campo{padding:.7rem clamp(1rem,2.5vw,1.6rem);border-right:1px solid var(--rule-soft);}
+.campo:last-child{border-right:0;}
+.campo dt{font-family:"Archivo",sans-serif;font-size:.63rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:.15rem;}
+.campo dd{margin:0;font-family:"IBM Plex Mono",monospace;font-size:.83rem;}
+
+/* ---------- legenda ---------- */
+.legenda{
+  border:1.5px solid var(--ink);border-top:0;background:var(--paper-2);
+  padding:.9rem clamp(1rem,2.5vw,1.6rem);
+  display:flex;flex-wrap:wrap;gap:.5rem 2rem;align-items:center;
+  font-family:"Archivo",sans-serif;font-size:.72rem;letter-spacing:.04em;
+}
+.legenda b{font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:.63rem;color:var(--ink-soft);}
+.legenda span{display:inline-flex;align-items:center;gap:.45rem;}
+.mk{
+  font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:.7rem;
+  width:1.35rem;height:1.35rem;display:inline-grid;place-items:center;
+  border:1.2px solid currentColor;
+}
+.mk--s{color:var(--conforme);}
+.mk--ed{color:var(--atencao);}
+.mk--n{color:var(--caneta);}
+
+/* ---------- seções ---------- */
+section{margin-top:clamp(3rem,7vw,5rem);}
+.eyebrow{
+  font-family:"Archivo",sans-serif;font-weight:600;font-size:.66rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--caneta);
+  display:flex;align-items:center;gap:.9rem;margin-bottom:.7rem;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--rule);}
+h2{
+  font-family:"Archivo",sans-serif;font-weight:600;
+  font-size:clamp(1.35rem,3.2vw,1.95rem);line-height:1.14;letter-spacing:-.015em;
+  margin:0 0 .6rem;max-width:32ch;
+}
+.chapeu{color:var(--ink-soft);max-width:64ch;margin:0 0 1.8rem;}
+p{max-width:66ch;}
+
+/* ---------- achados ---------- */
+.achado{
+  border-top:1px solid var(--rule);
+  padding:1.5rem 0;
+  display:grid;grid-template-columns:2.6rem 1fr;gap:0 1.2rem;
+}
+.achado:last-of-type{border-bottom:1px solid var(--rule);}
+.achado__mk{padding-top:.2rem;}
+.achado__id{
+  font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--ink-soft);
+  margin-top:.5rem;display:block;text-align:center;letter-spacing:-.02em;
+}
+h3{
+  font-family:"Archivo",sans-serif;font-weight:600;font-size:1.06rem;
+  line-height:1.3;margin:0 0 .7rem;max-width:44ch;
+}
+.par{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.9rem 1.8rem;margin:0 0 .8rem;}
+.par > div{border-left:2px solid var(--rule);padding-left:.9rem;}
+.par dt{font-family:"Archivo",sans-serif;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:.2rem;}
+.par dd{margin:0;font-size:.93rem;line-height:1.55;}
+.impacto{
+  font-size:.93rem;border-left:2px solid var(--caneta);padding-left:.9rem;color:var(--ink);
+}
+.impacto b{font-family:"Archivo",sans-serif;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--caneta);display:block;margin-bottom:.2rem;font-weight:600;}
+code{font-family:"IBM Plex Mono",monospace;font-size:.86em;background:rgba(27,31,28,.055);padding:.08em .35em;}
+
+/* ---------- tabela ---------- */
+.tabela-wrap{overflow-x:auto;margin:1.6rem 0 .8rem;border:1px solid var(--rule);background:var(--paper-2);}
+table{border-collapse:collapse;width:100%;min-width:620px;font-family:"IBM Plex Mono",monospace;font-size:.82rem;}
+th,td{padding:.62rem .85rem;text-align:right;border-bottom:1px solid var(--rule-soft);}
+th:first-child,td:first-child{text-align:left;}
+thead th{
+  font-family:"Archivo",sans-serif;font-weight:600;font-size:.63rem;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);
+  border-bottom:1.5px solid var(--ink);
+}
+tbody tr:last-child td{border-bottom:0;}
+tr.alerta{background:rgba(180,35,26,.07);}
+tr.alerta td{color:var(--caneta);font-weight:600;}
+.nota{font-size:.82rem;color:var(--ink-soft);max-width:62ch;}
+
+/* ---------- escopo ---------- */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1.5rem;margin-top:1.4rem;}
+.card{border:1px solid var(--rule);background:var(--paper-2);padding:1.3rem 1.4rem;}
+.card h4{
+  font-family:"Archivo",sans-serif;font-weight:600;font-size:.72rem;letter-spacing:.14em;
+  text-transform:uppercase;margin:0 0 .8rem;color:var(--ink-soft);
+}
+.card--fora{border-style:dashed;background:transparent;}
+.card--fora h4{color:var(--caneta);}
+ul.lista{list-style:none;padding:0;margin:0;}
+ul.lista li{padding:.42rem 0 .42rem 1.4rem;position:relative;font-size:.94rem;border-bottom:1px solid var(--rule-soft);}
+ul.lista li:last-child{border-bottom:0;}
+ul.lista li::before{content:"—";position:absolute;left:0;color:var(--rule);}
+.card--fora ul.lista li::before{content:"×";color:var(--caneta);font-family:"IBM Plex Mono",monospace;}
+
+/* ---------- decisões ---------- */
+.decisao{
+  display:grid;grid-template-columns:1.5rem 1fr;gap:0 1rem;
+  border-bottom:1px solid var(--rule-soft);padding:1rem 0;align-items:start;
+}
+.box{width:1.15rem;height:1.15rem;border:1.4px solid var(--ink);margin-top:.28rem;}
+.decisao p{margin:.3rem 0 0;font-size:.92rem;color:var(--ink-soft);max-width:60ch;}
+.decisao strong{font-family:"Archivo",sans-serif;font-weight:600;font-size:.98rem;}
+.dono{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--caneta);letter-spacing:.02em;}
+
+/* ---------- prazo ---------- */
+.prazo{
+  border:1.5px solid var(--caneta);background:rgba(180,35,26,.05);
+  padding:1.4rem clamp(1rem,2.5vw,1.6rem);margin-top:clamp(3rem,7vw,5rem);
+}
+.prazo .eyebrow{color:var(--caneta);}
+.prazo .eyebrow::after{background:rgba(180,35,26,.3);}
+.prazo p{margin:0;max-width:64ch;}
+.contador{
+  font-family:"Archivo",sans-serif;font-weight:700;font-size:clamp(2rem,6vw,3.2rem);
+  line-height:1;letter-spacing:-.03em;color:var(--caneta);margin:.2rem 0 .7rem;
+}
+
+/* ---------- observações / rodapé ---------- */
+.obs{border:1.5px solid var(--ink);margin-top:clamp(3rem,7vw,5rem);background:var(--paper-2);}
+.obs h4{
+  font-family:"Archivo",sans-serif;font-weight:600;font-size:.66rem;letter-spacing:.16em;
+  text-transform:uppercase;margin:0;padding:.75rem clamp(1rem,2.5vw,1.6rem);
+  border-bottom:1px solid var(--ink);color:var(--ink-soft);
+}
+.obs__corpo{padding:1.4rem clamp(1rem,2.5vw,1.6rem);}
+.obs__corpo p:last-child{margin-bottom:0;}
+footer{
+  margin-top:3rem;padding-top:1.2rem;border-top:1px solid var(--rule);
+  font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--ink-soft);
+  display:flex;flex-wrap:wrap;gap:.4rem 2rem;justify-content:space-between;
+}
+
+@media (max-width:560px){
+  .achado{grid-template-columns:1fr;gap:.8rem;}
+  .achado__mk{display:flex;align-items:center;gap:.7rem;}
+  .achado__id{margin:0;text-align:left;}
+}
+@media print{
+  body{background:#fff;background-image:none;font-size:10.5pt;}
+  .wrap{padding-bottom:0;}
+  section,.prazo,.obs{break-inside:avoid;}
+  .achado{break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="ficha">
+  <div class="ficha__faixa">
+    <span class="orgao">Grupo Nova Geração em Educação</span>
+    <span class="doc-id">SVS/CNG-001 · rev. 0</span>
+  </div>
+  <div class="ficha__titulo">
+    <h1>Ficha de observação da operação
+      <span class="sub">Diagnóstico documental do ciclo requerimento → contrato → assinatura, e dos instrumentos de avaliação (FOA). Documento preparado para o conselho da escola.</span>
+    </h1>
+  </div>
+  <dl class="ficha__campos">
+    <div class="campo"><dt>Avaliado</dt><dd>CNG Educação Ltda ME</dd></div>
+    <div class="campo"><dt>CNPJ</dt><dd>07.694.200/0001-30</dd></div>
+    <div class="campo"><dt>Base analisada</dt><dd>6 documentos</dd></div>
+    <div class="campo"><dt>Data</dt><dd>22/08/2026</dd></div>
+  </dl>
+</div>
+
+<div class="legenda">
+  <b>Legenda</b>
+  <span><i class="mk mk--s">S</i> Consistente</span>
+  <span><i class="mk mk--ed">ED</i> Divergente entre documentos</span>
+  <span><i class="mk mk--n">N</i> Ausente</span>
+</div>
+
+<!-- ==================== MÉTODO ==================== -->
+<section>
+  <div class="eyebrow">O que foi feito</div>
+  <h2>Os documentos foram lidos uns contra os outros, não isoladamente</h2>
+  <p class="chapeu">A escola opera hoje com um requerimento de matrícula, um contrato anual e quatro modelos de FOA. Cada um está correto quando lido sozinho. O diagnóstico consistiu em confrontá-los: verificar se o preço do requerimento fecha com a anuidade do contrato, se o que o contrato promete está sendo coletado no requerimento, e se os quatro FOA descrevem o mesmo instrumento.</p>
+  <p>Foram encontrados <strong>doze pontos de divergência ou ausência</strong>. Nenhum deles decorre de descuido da equipe — todos decorrem de os documentos serem mantidos separadamente, editados a partir da versão do ano anterior, e conferidos por leitura humana. É exatamente a classe de erro que um processo manual não consegue capturar, por mais cuidadosa que seja a pessoa.</p>
+</section>
+
+<!-- ==================== FINANCEIRO ==================== -->
+<section>
+  <div class="eyebrow">Bloco 1 · Reconciliação de preço</div>
+  <h2>Cinco das seis turmas fecham ao centavo. Uma está fora em R$&nbsp;1.729,05</h2>
+  <p class="chapeu">O requerimento informa a mensalidade. O contrato, na Cláusula 8ª, informa a anuidade. Multiplicando a mensalidade por doze, as duas fontes deveriam coincidir.</p>
+
+  <div class="tabela-wrap">
+    <table>
+      <thead>
+        <tr><th>Turma e período</th><th>Mensalidade × 12</th><th>Anuidade (contrato)</th><th>Diferença</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Berçário — ½ período</td><td>26.227,44</td><td>26.227,49</td><td>0,05</td></tr>
+        <tr class="alerta"><td>Berçário — integral</td><td>44.327,28</td><td>46.056,33</td><td>1.729,05</td></tr>
+        <tr><td>Mini-Maternal — ½ período</td><td>24.147,00</td><td>24.146,94</td><td>−0,06</td></tr>
+        <tr><td>Mini-Maternal — integral</td><td>36.057,48</td><td>36.057,50</td><td>0,02</td></tr>
+        <tr><td>Maternal / Jardim / Alfa I e II — ½</td><td>24.961,56</td><td>24.961,61</td><td>0,05</td></tr>
+        <tr><td>Maternal / Jardim / Alfa I e II — integral</td><td>36.872,16</td><td>36.872,17</td><td>0,01</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="nota">Valores em reais. A anuidade do berçário integral implica mensalidade de R$&nbsp;3.838,03, contra R$&nbsp;3.693,94 no requerimento — R$&nbsp;144,09 por mês de diferença. As demais linhas divergem em centavos, o que é apenas arredondamento.</p>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--n">N</i><span class="achado__id">A-01</span></div>
+    <div>
+      <h3>Berçário integral: as duas fontes de preço discordam</h3>
+      <div class="par">
+        <div><dt>O requerimento diz</dt><dd>Mensalidade de R$&nbsp;3.693,94, com 5% de desconto de pontualidade resultando em R$&nbsp;3.509,25.</dd></div>
+        <div><dt>O contrato diz</dt><dd>Anuidade de R$&nbsp;46.056,33 para a mesma turma e período.</dd></div>
+      </div>
+      <p class="impacto"><b>Consequência</b>A turma de maior ticket da escola tem dois preços válidos circulando ao mesmo tempo, em documentos que são assinados juntos. Qual dos dois prevalece numa contestação é matéria de interpretação — e o Código de Defesa do Consumidor tende a resolver ambiguidade a favor do consumidor. Precisa de decisão da direção antes da próxima safra.</p>
+    </div>
+  </div>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--ed">ED</i><span class="achado__id">A-02</span></div>
+    <div>
+      <h3>Alimentação do berçário: inclusa no contrato, cobrada à parte no requerimento</h3>
+      <div class="par">
+        <div><dt>O contrato diz</dt><dd>Berçário integral compreende “até 10h diárias de atendimento (almoço, jantar e banho)”.</dd></div>
+        <div><dt>O requerimento diz</dt><dd>Alimentação como serviço adicional: almoço R$&nbsp;570, almoço e jantar R$&nbsp;800, com nota de rodapé indicando “almoço ou jantar” para berçário a R$&nbsp;530.</dd></div>
+      </div>
+      <p class="impacto"><b>Consequência</b>Ou a escola está cobrando duas vezes pelo mesmo serviço, ou está deixando de faturar até R$&nbsp;800 por mês por criança de berçário integral. Não é possível saber qual, apenas pelos documentos. Esta é a segunda maior exposição financeira do diagnóstico.</p>
+    </div>
+  </div>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--s">S</i><span class="achado__id">A-03</span></div>
+    <div>
+      <h3>A escada de descontos da matrícula está integralmente correta</h3>
+      <p style="margin:0 0 .8rem;font-size:.95rem;">Os sete degraus foram recalculados a partir da matrícula cheia implícita de R$&nbsp;1.821,46: 50%, 45%, 40% à vista, 35% em 2×, 20% em 3×, 10% em 4×, 5% em 5× e 6× sem desconto. Todos batem, com erro máximo de um centavo.</p>
+      <p class="impacto" style="border-left-color:var(--conforme);"><b style="color:var(--conforme);">Observação</b>Registrado por contraste: quando a regra é aritmética e cabe numa tabela, a equipe acerta. O erro aparece onde a informação está duplicada em dois documentos diferentes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CONTRATUAL ==================== -->
+<section>
+  <div class="eyebrow">Bloco 2 · Instrumentos contratuais</div>
+  <h2>O contrato foi revisado. Os documentos que o alimentam ficaram para trás</h2>
+  <p class="chapeu">A revisão jurídica de 2027 modernizou o contrato — LGPD, inclusão, ECA, mediação, assinatura eletrônica. Mas o requerimento e a prática comercial não acompanharam.</p>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--n">N</i><span class="achado__id">A-04</span></div>
+    <div>
+      <h3>A autorização de imagem não cumpre o que o próprio contrato exige</h3>
+      <div class="par">
+        <div><dt>O contrato exige</dt><dd>Cláusula 16ª: autorização “específica, destacada, facultativa e <strong>revogável</strong>”.</dd></div>
+        <div><dt>O requerimento oferece</dt><dd>Um par de caixas “sim/não” no meio do formulário de matrícula, cobrindo site e redes sociais em bloco único. Sem separação por canal e sem qualquer mecanismo de revogação.</dd></div>
+      </div>
+      <p class="impacto"><b>Consequência</b>Este é o ponto de origem da dificuldade com o ECA e a exposição de imagem que a direção vem enfrentando. A solução não está no site nem no aplicativo: está no formulário de matrícula, que hoje não sabe distinguir autorização para o site, para o Instagram, para o álbum da turma e para uso pedagógico interno — nem registrar quando um responsável muda de ideia.</p>
+    </div>
+  </div>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--n">N</i><span class="achado__id">A-05</span></div>
+    <div>
+      <h3>Medicamento: existe autorização, não existe registro de administração</h3>
+      <div class="par">
+        <div><dt>O que já existe</dt><dd>O requerimento pergunta qual antitérmico administrar, e a Cláusula 13ª §1º exige solicitação escrita e prescrição médica.</dd></div>
+        <div><dt>O que não existe</dt><dd>Nenhum documento registra que o medicamento foi efetivamente dado: quem administrou, em que horário, qual dose, com qual testemunha, e quando os pais foram avisados.</dd></div>
+      </div>
+      <p class="impacto"><b>Consequência</b>É o maior risco de responsabilidade civil da operação e o único achado deste diagnóstico que não tem relação com dinheiro. A escola tem a autorização documentada e a execução não. Numa contestação, autorização sem registro de execução não protege ninguém.</p>
+    </div>
+  </div>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--ed">ED</i><span class="achado__id">A-06</span></div>
+    <div>
+      <h3>O contrato exige duas testemunhas com CPF — e ninguém dimensionou isso</h3>
+      <p style="margin:0 0 .8rem;font-size:.95rem;">O fecho do contrato prevê testemunha 1 e testemunha 2, ambas com nome e CPF. São <strong>quatro signatários por contrato</strong>, não dois. Multiplicado por ~130 alunos, isso muda o custo de qualquer plataforma de assinatura digital e exige definir quem testemunha.</p>
+      <p class="impacto"><b>Consequência</b>Vale manter as testemunhas: é a assinatura delas que dá ao contrato força de título executivo extrajudicial, o instrumento que sustenta a cobrança. Mas precisa ser decidido antes de contratar assinatura eletrônica, não depois.</p>
+    </div>
+  </div>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--ed">ED</i><span class="achado__id">A-07</span></div>
+    <div>
+      <h3>Material de uso individual: o contrato exclui, a prática inclui</h3>
+      <div class="par">
+        <div><dt>O contrato diz</dt><dd>Cláusula 8ª §8º: a anuidade não compreende materiais de uso individual.</dd></div>
+        <div><dt>A prática é</dt><dd>A escola absorveu a lista de papelaria no valor da mensalidade, como decisão competitiva, e a fatura sai por uma segunda empresa que não aparece em nenhum ponto do contrato.</dd></div>
+      </div>
+      <p class="impacto"><b>Consequência</b>O texto contratual e a operação real descrevem coisas diferentes. Recomenda-se alinhar o contrato à prática — e não o contrário —, com o apoio da assessoria jurídica, incluindo a definição de qual empresa fatura o quê.</p>
+    </div>
+  </div>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--ed">ED</i><span class="achado__id">A-08</span></div>
+    <div>
+      <h3>A alçada de desconto que a direção usa não está escrita em lugar nenhum</h3>
+      <p style="margin:0 0 .8rem;font-size:.95rem;">A regra praticada é: até 10% a secretaria concede, acima disso apenas a direção. O requerimento traz um campo aberto — “condições especiais: turma ___, desconto % ___” — sem teto e sem indicação de quem autorizou. O contrato menciona 10%, mas em outro contexto: desconto para pagamento antecipado da anuidade inteira.</p>
+      <p class="impacto"><b>Consequência</b>Hoje a alçada depende inteiramente de disciplina pessoal. Não há como auditar retroativamente quem concedeu qual desconto, nem impedir que um caso excepcional vire precedente.</p>
+    </div>
+  </div>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--ed">ED</i><span class="achado__id">A-09</span></div>
+    <div>
+      <h3>O requerimento de 2027 ainda tem “exercício 2026” no corpo</h3>
+      <p style="margin:0 0 .8rem;font-size:.95rem;">O cabeçalho diz “ano letivo 2027”; o bloco de serviços contratados diz “exercício 2026”. Resíduo da edição do arquivo do ano anterior.</p>
+      <p class="impacto"><b>Consequência</b>Inofensivo isoladamente, revelador no conjunto: é a assinatura do processo de copiar o arquivo do ano passado e ir corrigindo. O mesmo mecanismo que produziu o erro do berçário integral.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOA ==================== -->
+<section>
+  <div class="eyebrow">Bloco 3 · Fichas de observação do aluno</div>
+  <h2>Os quatro FOA não são um instrumento em quatro versões. São dois instrumentos diferentes</h2>
+  <p class="chapeu">Mini Maternal e Maternal usam uma escala de seis valores (S / N / A / M / V / P) com respostas em texto livre. Jardim, Alfa I e Alfa II usam três valores (S / ED / N) com caixas de marcação, organizados pelos campos de experiência da BNCC. As duas famílias não são comparáveis entre si.</p>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--n">N</i><span class="achado__id">A-10</span></div>
+    <div>
+      <h3>O Alfa II não avalia o campo socioemocional — e o cabeçalho esconde isso</h3>
+      <p style="margin:0 0 .8rem;font-size:.95rem;">O primeiro bloco do Alfa II está intitulado <em>“O eu, o outro e o nós (BNCC)”</em>, mas todos os itens abaixo dele pertencem a <em>“Espaços, tempos, quantidades, relações e transformações”</em> — que aparece de novo, mais adiante, como bloco próprio e com lista diferente.</p>
+      <p class="impacto"><b>Consequência</b>Na prática, a turma que está saindo da escola para o ensino fundamental é a única sem avaliação do campo socioemocional. O erro é de recorte e colagem, mas o efeito é pedagógico e passou despercebido porque o título estava certo. Sugere-se revisão pela coordenação antes do próximo trimestre.</p>
+    </div>
+  </div>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--ed">ED</i><span class="achado__id">A-11</span></div>
+    <div>
+      <h3>Por que o Word “estoura”: os arquivos acumulam trimestres e carregam imagem pesada</h3>
+      <div class="par">
+        <div><dt>Acúmulo</dt><dd>O Alfa I contém o bloco de Escuta e Fala do 1º <em>e</em> do 2º trimestre no mesmo arquivo, um colado abaixo do outro. O Jardim, o do 2º. Cada trimestre faz o documento crescer.</dd></div>
+        <div><dt>Peso</dt><dd>Cada FOA carrega uma imagem de cabeçalho de 154&nbsp;KB — dez vezes o peso da imagem usada no requerimento — antes de qualquer foto de criança ser inserida.</dd></div>
+      </div>
+      <p class="impacto"><b>Consequência</b>O comportamento errático do Word não é falha da equipe nem do computador. É consequência mecânica de tabelas aninhadas dentro de tabelas, empilhadas por trimestre, com imagem em resolução alta. Nenhuma quantidade de treinamento resolve isso; troca de ferramenta resolve.</p>
+    </div>
+  </div>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--n">N</i><span class="achado__id">A-12</span></div>
+    <div>
+      <h3>Não há FOA do berçário</h3>
+      <p style="margin:0 0 .8rem;font-size:.95rem;">Os quatro modelos cobrem Mini Maternal, Maternal, Jardim, Alfa I e Alfa II. A escola tem seis turmas. Falta o berçário — a de maior mensalidade e maior exigência regulatória.</p>
+      <p class="impacto"><b>Consequência</b>Pode ser apenas que o modelo não tenha sido enviado. Se de fato não existir, é lacuna de documentação pedagógica na turma mais sensível da escola. A confirmação é imediata e cabe à coordenação.</p>
+    </div>
+  </div>
+
+  <div class="achado">
+    <div class="achado__mk"><i class="mk mk--ed">ED</i><span class="achado__id">A-13</span></div>
+    <div>
+      <h3>Periodicidade: os documentos dizem trimestre, a operação relata mês</h3>
+      <p style="margin:0 0 .8rem;font-size:.95rem;">Todos os quatro arquivos são explicitamente trimestrais. A percepção relatada na reunião é de um ciclo mensal, com cerca de uma semana e meia de trabalho consumida a cada rodada.</p>
+      <p class="impacto"><b>Consequência</b>A diferença é de três vezes no volume de trabalho e, portanto, no ganho esperado com automação. Entre 70 e 90 itens são preenchidos por criança a cada rodada. Precisa ser esclarecido antes de qualquer estimativa de esforço ou de retorno.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PRAZO ==================== -->
+<div class="prazo">
+  <div class="eyebrow">Restrição de calendário</div>
+  <div class="contador">9 dias</div>
+  <p>O prazo do desconto de 50% na rematrícula — R$&nbsp;910,73 — vence em <strong>31 de agosto de 2026</strong>. A safra 2027 será processada com o método atual, manualmente. Qualquer sistema entregue agora chegaria no meio da operação, e implantar sistema durante o pico é como trocar pneu com o carro andando. A recomendação é construir agora e usar em produção a partir da safra seguinte, com as transições de turma ao longo de 2027 servindo de teste real e de baixo volume.</p>
+</div>
+
+<!-- ==================== ESCOPO ==================== -->
+<section>
+  <div class="eyebrow">Proposta · Piloto</div>
+  <h2>Um módulo só: do requerimento ao contrato assinado e arquivado</h2>
+  <p class="chapeu">O piloto ataca o ciclo que a direção descreveu como o mais caro em tempo e que, agora se sabe, é também onde estão as divergências de preço. Tudo o mais fica explicitamente fora.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>Entra no piloto</h4>
+      <ul class="lista">
+        <li>Cadastro único de aluno, responsáveis legais e responsável financeiro — uma digitação, não cinco</li>
+        <li>Tabela de preços com vigência por ano letivo, fonte única de mensalidade e anuidade</li>
+        <li>Geração automática do requerimento e do contrato a partir do cadastro</li>
+        <li>Alçada de desconto aplicada pelo sistema, com registro de quem autorizou</li>
+        <li>Envio para assinatura eletrônica com os quatro signatários e acompanhamento de status</li>
+        <li>Arquivo do documento assinado com selo de integridade e data</li>
+        <li>Consentimento de imagem separado por canal, com registro de revogação</li>
+        <li>Registro de alteração contratual para as transições de turma</li>
+      </ul>
+    </div>
+    <div class="card card--fora">
+      <h4>Fica fora — e por escrito</h4>
+      <ul class="lista">
+        <li>Emissão de nota fiscal de serviço: depende da prefeitura e é o maior risco de prazo de toda a lista</li>
+        <li>FOA: depende do cadastro do piloto e de decisão pedagógica sobre unificar as escalas</li>
+        <li>Fluxo de caixa, DRE e controle financeiro</li>
+        <li>Compras, estoque e material de papelaria</li>
+        <li>CRM, captação e pós-venda</li>
+        <li>Álbum de fotos e portal para os pais</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== DECISÕES ==================== -->
+<section>
+  <div class="eyebrow">Antes de começar</div>
+  <h2>Sete decisões que dependem da escola</h2>
+  <p class="chapeu">Cada item abaixo bloqueia o desenvolvimento. Não são formalidades: são informações que o sistema precisa ter como verdade e que só a escola pode determinar.</p>
+
+  <div class="decisao"><span class="box"></span><div>
+    <strong>Qual é o preço do berçário integral</strong> <span class="dono">direção</span>
+    <p>R$ 44.327,28 ou R$ 46.056,33? Sem essa definição a tabela de preços não pode existir.</p>
+  </div></div>
+
+  <div class="decisao"><span class="box"></span><div>
+    <strong>Alimentação do berçário integral está inclusa ou é adicional</strong> <span class="dono">direção</span>
+    <p>A resposta determina se há cobrança em duplicidade ou receita não faturada.</p>
+  </div></div>
+
+  <div class="decisao"><span class="box"></span><div>
+    <strong>Tabela de preços 2028 aprovada como fonte única</strong> <span class="dono">direção</span>
+    <p>Um documento do qual mensalidade e anuidade derivam. Enquanto forem duas planilhas, o sistema apenas automatiza a divergência.</p>
+  </div></div>
+
+  <div class="decisao"><span class="box"></span><div>
+    <strong>Quem são as testemunhas do contrato</strong> <span class="dono">direção</span>
+    <p>Fixas ou variáveis, e se aceitam assinar cerca de 130 documentos por safra.</p>
+  </div></div>
+
+  <div class="decisao"><span class="box"></span><div>
+    <strong>Parecer jurídico sobre o consentimento de imagem por canal</strong> <span class="dono">assessoria jurídica</span>
+    <p>A assessoria define o escopo e a forma; o sistema implementa. Convém informar que o requerimento atual não atende à Cláusula 16ª do contrato que ela mesma revisou.</p>
+  </div></div>
+
+  <div class="decisao"><span class="box"></span><div>
+    <strong>Contrato de tratamento de dados entre a escola e o fornecedor</strong> <span class="dono">assessoria jurídica</span>
+    <p>A escola é controladora de dado sensível de criança; o fornecedor é operador. Assinado antes de qualquer dado real entrar no sistema.</p>
+  </div></div>
+
+  <div class="decisao"><span class="box"></span><div>
+    <strong>Medição do processo atual</strong> <span class="dono">secretaria</span>
+    <p>Minutos por contrato, pessoas envolvidas, dias consumidos na rematrícula. Sem número de partida não há como demonstrar ganho depois.</p>
+  </div></div>
+</section>
+
+<!-- ==================== OBSERVAÇÕES ==================== -->
+<div class="obs">
+  <h4>Observações do avaliador</h4>
+  <div class="obs__corpo">
+    <p>A escola opera há vinte anos com inadimplência praticamente nula e satisfação declarada acima de noventa por cento. O diagnóstico não contradiz isso — reforça. Onde a regra é clara e cabe numa tabela, a equipe acerta ao centavo, como mostra a escada de descontos da matrícula.</p>
+    <p>Os doze pontos levantados têm todos a mesma origem: informação que precisa ser verdadeira em dois lugares ao mesmo tempo, mantida por conferência humana. Preço no requerimento e no contrato. Autorização de imagem no formulário e na cláusula. Campo da BNCC no título e na lista de itens. Nenhuma pessoa consegue sustentar isso indefinidamente para cento e trinta alunos — e não deveria precisar.</p>
+    <p>O piloto proposto não é um sistema de gestão escolar. É a eliminação da segunda digitação. Um único cadastro passa a ser a origem de todo documento gerado, e a conferência deixa de depender de quem está lendo.</p>
+  </div>
+</div>
+
+<footer>
+  <span>SomaVerso AI Systems · Diagnóstico documental SVS/CNG-001</span>
+  <span>Base: 6 documentos · 13 achados · 22.08.2026</span>
+</footer>
+
+</div>
+</body>
+</html>
