@@ -8,3 +8,5 @@ export * from "./pedido.js";
 export * from "./contexto.js";
 export * from "./tabela-preco.js";
 export * from "./resultado.js";
+export * from "./estado-avaliacao.js";
+export * from "./problema.js";

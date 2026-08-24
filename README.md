@@ -30,8 +30,9 @@ contra um defeito específico, extraia sob demanda para `reference/`
 
 ```
 apps/
-  api/          Fastify — stub (M3)
-  web/          SPA (Vite) — stub (M3)
+  api/          Fastify — JWT próprio, RBAC, RFC 7807 — implementado (M3)
+  web/          SPA (Vite + React) — implementado (M3)
+  e2e/          Playwright — jornada ponta a ponta — implementado (M3)
   worker/       BullMQ — stub (M6)
 packages/
   motor/        motor determinístico R-01..R-12 — implementado (M1)
@@ -39,7 +40,7 @@ packages/
   documentos/   templates HTML/PDF — stub (M4)
   ledger/       cadeia de evidência (Postgres) — implementado (M2)
 infra/
-  db/           migrations SQL, RLS, trigger append-only — implementado (M2)
+  db/           migrations SQL, RLS, trigger append-only — implementado (M2/M3)
 ```
 
 ## Marcos (PRD §19)
@@ -48,10 +49,41 @@ infra/
 |---|---|---|
 | M1 | `packages/motor` + `packages/schemas` + suíte de testes | golden 2027 bloqueia em R-01 — ✅ |
 | M2 | Postgres, RLS, cadeia append-only, verificação | teste de adulteração passa — ✅ |
-| M3 | API + interface operacional com veredito em tempo real | E2E incompleto → bloqueado → liberado |
+| M3 | API + interface operacional com veredito em tempo real | E2E incompleto → bloqueado → liberado — ✅ |
 | M4 | Render Playwright + selo + arquivo | determinismo de SHA-256 |
 | M5 | DocuSign JWT + envelope + webhook + arquivamento do assinado | envelope real em homologação, 5 signatários |
 | M6 | BullMQ/Redis, DLQ, observabilidade | pico simulado de 40 emissões/dia |
+
+## API + interface operacional (M3)
+
+`apps/api` (Fastify) implementa as rotas de `/v1` do PRD §15 que fazem
+sentido sem M4/M5 (documento e webhook DocuSign ficam como stub explícito,
+não fingem capacidade — PRD §13). Autenticação é JWT próprio (email+senha,
+`bcryptjs`), sem provedor terceiro — adequado ao piloto de uma escola.
+RBAC por papel (`usuario_papel` permite múltiplos papéis por usuário);
+I-6 é reforçado no servidor: `Contexto` (tabela aprovada, testemunhas,
+DPA, ambiente) nunca vem do corpo da requisição, e `pedido.operador`
+enviado pelo cliente é sempre substituído pelo papel resolvido do token
+(sem isso, um usuário poderia se declarar `DIRECAO` no corpo e escapar do
+teto de desconto de R-03).
+
+`apps/web` (Vite + React) é o formulário operacional: `pendencias()` do
+`@somaverso/motor` roda no navegador para feedback instantâneo de campos
+faltando (I-7: motor isomórfico), mas o veredito LIBERADO/BLOQUEADO em si
+só tem autoridade quando vem de `/simulacao` no servidor — o botão de
+emissão só habilita nesse caso (§6: "o veredito do cliente é conveniência
+de UX e não tem autoridade").
+
+`apps/e2e` (Playwright) roda a jornada real (login → criar matrícula →
+INCOMPLETO → BLOQUEADO em R-07 → aprovar tabela → definir testemunhas →
+LIBERADO → emissão com stub honesto → trilha), subindo API + web + o
+mesmo Postgres do Docker Compose.
+
+```bash
+pnpm db:up && pnpm db:migrate
+pnpm test:integration:full   # ledger + API contra Postgres real (RBAC, I-6, idempotência)
+pnpm test:e2e:full            # build dos packages + E2E completo no navegador
+```
 
 ## Postgres local (M2)
 
@@ -87,5 +119,6 @@ pnpm install
 pnpm typecheck
 pnpm test              # unitários — schemas, motor, ledger (não precisa de Postgres)
 pnpm test:coverage      # 100% de cobertura de branch em packages/motor
-pnpm test:integration:full  # sobe Postgres, migra, roda testes de integração do ledger
+pnpm test:integration:full  # sobe Postgres, migra, roda testes de integração (ledger + API)
+pnpm test:e2e:full           # idem + build dos packages + jornada completa no navegador
 ```

@@ -4,3 +4,4 @@ export * from "./hash.js";
 export * from "./db.js";
 export * from "./registra.js";
 export * from "./verifica.js";
+export * from "./trilha.js";
